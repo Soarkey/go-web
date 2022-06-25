@@ -9,7 +9,9 @@ type HandleFunc func(*Context)
 
 // Engine 实现 ServeHTTP 接口
 type Engine struct {
+	*RouterGroup
 	router *router
+	groups []*RouterGroup
 }
 
 // ServeHTTP 主入口
@@ -39,5 +41,16 @@ func (e *Engine) Run(addr string) (err error) {
 
 // New 构造函数
 func New() *Engine {
+	engine := &Engine{router: newRouter()}
+	engine.RouterGroup = &RouterGroup{engine: engine}
+	engine.groups = []*RouterGroup{engine.RouterGroup}
 	return &Engine{router: newRouter()}
+}
+
+// RouterGroup 路由分组
+type RouterGroup struct {
+	prefix      string       // 前缀
+	middlewares []HandleFunc // 中间件
+	parent      *RouterGroup // 支持组合
+	engine      *Engine      // 所有分组共享一个Engine
 }
